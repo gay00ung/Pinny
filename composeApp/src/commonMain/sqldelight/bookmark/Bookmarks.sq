@@ -1,0 +1,37 @@
+-- Enable FTS5 on Android. iOS/other can fallback without MATCH (간단 LIKE 검색으로 대체 가능)
+CREATE TABLE bookmarks(
+  id TEXT NOT NULL PRIMARY KEY,
+  url TEXT NOT NULL,
+  title TEXT,
+  description TEXT,
+  thumbnailUrl TEXT,
+  category TEXT,
+  tagsJson TEXT NOT NULL,     -- ["android","compose"]
+  createdAt INTEGER NOT NULL,
+  updatedAt INTEGER NOT NULL,
+  isArchived INTEGER NOT NULL
+);
+
+-- ANDROID ONLY: virtual table for FTS5
+-- Use a separate .sq or guard at runtime; here for reference:
+-- CREATE VIRTUAL TABLE bookmarks_fts USING fts5(title, description, url, content='bookmarks', content_rowid='rowid');
+
+insertBookmark:
+INSERT OR REPLACE INTO bookmarks(id, url, title, description, thumbnailUrl, category, tagsJson, createdAt, updatedAt, isArchived)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+updateArchived:
+UPDATE bookmarks SET isArchived = ?, updatedAt = ? WHERE id = ?;
+
+updateMeta:
+UPDATE bookmarks SET title = ?, thumbnailUrl = ?, updatedAt = ? WHERE id = ?;
+
+selectAll:
+SELECT * FROM bookmarks WHERE isArchived = 0 ORDER BY updatedAt DESC;
+
+-- Cross-platform fallback (LIKE):
+searchAllLike:
+SELECT * FROM bookmarks
+WHERE isArchived = 0
+  AND (title LIKE ? OR description LIKE ? OR url LIKE ?)
+ORDER BY updatedAt DESC;
