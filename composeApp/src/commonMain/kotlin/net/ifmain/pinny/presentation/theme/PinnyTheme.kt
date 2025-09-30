@@ -1,11 +1,18 @@
-package net.ifmain.pinny.ui.theme
+package net.ifmain.pinny.presentation.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 
 private val PinnyPink = Color(0xFFFF9EC4)
 private val PinnyLavender = Color(0xFFA18CFF)
@@ -65,16 +72,63 @@ private val DarkColorScheme = darkColorScheme(
     outline = PinnyNeutral,
 )
 
+private val PinnyShapes = Shapes(
+    extraSmall = androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
+    small = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
+    medium = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
+    large = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
+    extraLarge = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
+)
+
+data class PinnySpacing(
+    val xs: Dp = 4.dp,
+    val sm: Dp = 8.dp,
+    val md: Dp = 12.dp,
+    val lg: Dp = 16.dp,
+    val xl: Dp = 24.dp,
+    val gutter: Dp = 32.dp,
+)
+
+data class PinnyCorners(
+    val card: Dp = 12.dp,
+    val sheet: Dp = 20.dp,
+)
+
+data class PinnyElevations(
+    val level0: Dp = 0.dp,
+    val level1: Dp = 1.dp,
+    val level2: Dp = 3.dp,
+)
+
+private val LocalPinnySpacing = staticCompositionLocalOf { PinnySpacing() }
+private val LocalPinnyCorners = staticCompositionLocalOf { PinnyCorners() }
+private val LocalPinnyElevations = staticCompositionLocalOf { PinnyElevations() }
+
 @Composable
 fun PinnyTheme(
     useDarkTheme: Boolean = isSystemInDarkTheme(),
+    useDynamicColor: Boolean = false,
+    overrideColorScheme: ColorScheme? = null,
     content: @Composable () -> Unit,
 ) {
-    val colorScheme = if (useDarkTheme) DarkColorScheme else LightColorScheme
-    MaterialTheme(
-        colorScheme = colorScheme,
-        content = content,
-    )
+    val fallbackScheme = if (useDarkTheme) DarkColorScheme else LightColorScheme
+    val colorScheme = when {
+        overrideColorScheme != null -> overrideColorScheme
+        useDynamicColor -> fallbackScheme // Android 12+에서 플랫폼 쪽에서 동적 팔레트를 주입할 때 사용
+        else -> fallbackScheme
+    }
+
+    CompositionLocalProvider(
+        LocalPinnySpacing provides PinnySpacing(),
+        LocalPinnyCorners provides PinnyCorners(),
+        LocalPinnyElevations provides PinnyElevations(),
+    ) {
+        MaterialTheme(
+            colorScheme = colorScheme,
+            shapes = PinnyShapes,
+            content = content,
+        )
+    }
 }
 
 /**
@@ -86,3 +140,18 @@ val PinnyEmptyStateGradientStops = listOf(
     0.0f to PinnyPink,
     1.0f to PinnyLavender,
 )
+
+val MaterialTheme.spacing: PinnySpacing
+    @Composable
+    @ReadOnlyComposable
+    get() = LocalPinnySpacing.current
+
+val MaterialTheme.corners: PinnyCorners
+    @Composable
+    @ReadOnlyComposable
+    get() = LocalPinnyCorners.current
+
+val MaterialTheme.elevations: PinnyElevations
+    @Composable
+    @ReadOnlyComposable
+    get() = LocalPinnyElevations.current
