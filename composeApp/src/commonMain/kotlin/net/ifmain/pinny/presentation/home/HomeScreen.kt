@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.*
 import androidx.compose.ui.unit.*
 import androidx.lifecycle.compose.*
 import kotlinx.coroutines.flow.*
+import net.ifmain.pinny.presentation.components.PinnyTopBar
 import net.ifmain.pinny.presentation.theme.*
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -72,6 +73,7 @@ fun HomeRoute(
         state = state,
         onIntent = viewModel::onIntent,
         snackbarHostState = snackbarHostState,
+        viewModel = viewModel
     )
 }
 
@@ -81,11 +83,23 @@ fun HomeScreen(
     state: HomeState,
     onIntent: (HomeIntent) -> Unit,
     snackbarHostState: SnackbarHostState,
+    viewModel: HomeViewModel = rememberHomeViewModel()
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    var searching by remember { mutableStateOf(false) }
+    var query by remember { mutableStateOf("") }
+    val behavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     Scaffold(
-        topBar = { PinnyTopBar() },
+        topBar = { PinnyTopBar(
+            isSearching = searching,
+            searchText = query,
+            onSearchTextChange = { query = it; viewModel.onIntent(HomeIntent.QueryChanged(it)) },
+            onSearchToggle = { searching = it },
+            onAddClick = { /* 열기: Add bottom sheet */ },
+            onOverflowClick = { /* 메뉴 */ },
+            scrollBehavior = behavior
+        ) },
         floatingActionButton = { AddFab { onIntent(HomeIntent.ShowAddSheet) } },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { paddingValues ->
@@ -136,23 +150,6 @@ fun HomeScreen(
             )
         }
     }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun PinnyTopBar() {
-    TopAppBar(
-        title = { Text("Pinny") },
-        actions = {
-            IconButton(onClick = { /* TODO: overflow actions */ }) {
-                Icon(Icons.Filled.MoreVert, contentDescription = "옵션")
-            }
-        },
-        colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = MaterialTheme.colorScheme.surface,
-            titleContentColor = MaterialTheme.colorScheme.onSurface,
-        )
-    )
 }
 
 @Composable

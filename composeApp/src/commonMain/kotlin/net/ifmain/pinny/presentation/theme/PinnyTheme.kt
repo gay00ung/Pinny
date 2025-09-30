@@ -1,6 +1,7 @@
 package net.ifmain.pinny.presentation.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
@@ -73,11 +74,11 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val PinnyShapes = Shapes(
-    extraSmall = androidx.compose.foundation.shape.RoundedCornerShape(4.dp),
-    small = androidx.compose.foundation.shape.RoundedCornerShape(8.dp),
-    medium = androidx.compose.foundation.shape.RoundedCornerShape(12.dp),
-    large = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
-    extraLarge = androidx.compose.foundation.shape.RoundedCornerShape(28.dp),
+    extraSmall = RoundedCornerShape(4.dp),
+    small = RoundedCornerShape(8.dp),
+    medium = RoundedCornerShape(12.dp),
+    large = RoundedCornerShape(20.dp),
+    extraLarge = RoundedCornerShape(28.dp),
 )
 
 data class PinnySpacing(
