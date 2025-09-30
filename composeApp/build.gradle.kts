@@ -55,7 +55,6 @@ kotlin {
             implementation(libs.sqldelight.coroutines)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)
-            implementation(libs.okhttp)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
@@ -88,6 +87,8 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
+    sourceSets["main"].assets.srcDir("src/commonMain/resources")
 }
 
 dependencies {

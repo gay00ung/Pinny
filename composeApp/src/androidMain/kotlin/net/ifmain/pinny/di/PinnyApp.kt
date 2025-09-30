@@ -10,6 +10,7 @@ import org.koin.core.context.*
 class PinnyApp : Application() {
     override fun onCreate() {
         super.onCreate()
+        instance = this
 
         val dbFactory = {
             val driver = AndroidSqliteDriver(
@@ -27,5 +28,11 @@ class PinnyApp : Application() {
                 androidAppModule
             )
         }
+    }
+
+    companion object {
+        @Volatile
+        var instance: PinnyApp? = null
+            private set
     }
 }

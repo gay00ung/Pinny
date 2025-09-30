@@ -20,11 +20,16 @@ import androidx.compose.ui.draw.*
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.*
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.*
 import androidx.compose.ui.text.style.*
 import androidx.compose.ui.unit.*
+import net.ifmain.pinny.resources.decodeImageBitmap
+import net.ifmain.pinny.resources.readResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -111,6 +116,12 @@ private fun DefaultRow(
     onAdd: () -> Unit,
     onOverflow: () -> Unit
 ) {
+    var bmp by remember { mutableStateOf<ImageBitmap?>(null) }
+
+    LaunchedEffect(Unit) {
+        runCatching { readResource("pinny_app_icon.png") }
+            .onSuccess { bytes -> runCatching { decodeImageBitmap(bytes) }.onSuccess { bmp = it } }
+    }
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth()
@@ -123,8 +134,16 @@ private fun DefaultRow(
                 .background(Color.White.copy(alpha = 0.3f)),
             contentAlignment = Alignment.Center
         ) {
-            // 심플 점포인트
-            Box(Modifier.size(8.dp).clip(CircleShape).background(Color.White))
+            bmp?.let {
+                Image(
+                    bitmap = it,
+                    contentDescription = "Pinny",
+                    modifier = Modifier
+                        .fillMaxSize(0.8f)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop
+                )
+            }
         }
 
         Spacer(Modifier.width(10.dp))
@@ -141,12 +160,22 @@ private fun DefaultRow(
         // Search
         SmallIconButton(icon = Icons.Filled.Search, contentDesc = "검색", onClick = onSearch)
 
+        Spacer(Modifier.width(15.dp))
+
         // Add
         SmallIconButton(icon = Icons.Filled.Add, contentDesc = "추가", onClick = onAdd)
+        
+        Spacer(Modifier.width(15.dp))
 
         // Overflow
         SmallIconButton(icon = Icons.Filled.MoreVert, contentDesc = "옵션", onClick = onOverflow)
     }
+}
+
+@Preview
+@Composable
+private fun DefaultRowPreview() {
+    DefaultRow(title = "Pinny", onSearch = {}, onAdd = {}, onOverflow = {})
 }
 
 /* ===== 검색 행(필 형태) ===== */
@@ -161,7 +190,11 @@ private fun SearchRow(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth()
     ) {
-        SmallIconButton(icon = Icons.AutoMirrored.Filled.ArrowBack, contentDesc = "뒤로", onClick = onBack)
+        SmallIconButton(
+            icon = Icons.AutoMirrored.Filled.ArrowBack,
+            contentDesc = "뒤로",
+            onClick = onBack
+        )
 
         Spacer(Modifier.width(8.dp))
 
@@ -192,7 +225,11 @@ private fun SearchRow(
                 )
                 AnimatedVisibility(text.isNotEmpty()) {
                     IconButton(onClick = onClear) {
-                        Icon(Icons.Filled.Close, contentDescription = "지우기", tint = Color(0xFFB0AEC6))
+                        Icon(
+                            Icons.Filled.Close,
+                            contentDescription = "지우기",
+                            tint = Color(0xFFB0AEC6)
+                        )
                     }
                 }
             }
