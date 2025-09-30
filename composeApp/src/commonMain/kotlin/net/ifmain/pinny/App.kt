@@ -18,11 +18,12 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 
 import pinny.composeapp.generated.resources.Res
 import pinny.composeapp.generated.resources.compose_multiplatform
+import net.ifmain.pinny.ui.theme.PinnyTheme
 
 @Composable
 @Preview
 fun App() {
-    MaterialTheme {
+    PinnyTheme {
         var showContent by remember { mutableStateOf(false) }
         Column(
             modifier = Modifier
