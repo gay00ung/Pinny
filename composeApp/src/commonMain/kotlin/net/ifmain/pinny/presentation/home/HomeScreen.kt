@@ -108,12 +108,6 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            SearchBar(
-                value = state.query,
-                onValueChange = { onIntent(HomeIntent.QueryChanged(it)) },
-                onSearch = { onIntent(HomeIntent.SubmitSearch) },
-                onClear = { onIntent(HomeIntent.ClearSearch) },
-            )
             when {
                 state.isLoading -> ShimmerListPlaceholder()
                 state.items.isEmpty() -> EmptyState(
@@ -161,39 +155,6 @@ fun AddFab(onClick: () -> Unit) {
     ) {
         Icon(Icons.Filled.Add, contentDescription = "북마크 추가")
     }
-}
-
-@Composable
-fun SearchBar(
-    value: String,
-    onValueChange: (String) -> Unit,
-    onSearch: () -> Unit,
-    onClear: () -> Unit,
-) {
-    TextField(
-        value = value,
-        onValueChange = onValueChange,
-        placeholder = { Text("링크, 노트, 태그 검색") },
-        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-        trailingIcon = {
-            if (value.isNotBlank()) {
-                IconButton(onClick = onClear) {
-                    Icon(Icons.Filled.Close, contentDescription = "검색어 지우기")
-                }
-            }
-        },
-        singleLine = true,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = MaterialTheme.spacing.lg, vertical = MaterialTheme.spacing.sm),
-        shape = RoundedCornerShape(MaterialTheme.corners.card),
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-        keyboardActions = KeyboardActions(onSearch = { onSearch() }),
-        colors = TextFieldDefaults.colors(
-            focusedContainerColor = MaterialTheme.colorScheme.surface,
-            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-        )
-    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

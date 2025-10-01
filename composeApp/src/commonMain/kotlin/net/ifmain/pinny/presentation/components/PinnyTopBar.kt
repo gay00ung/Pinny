@@ -10,6 +10,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.*
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.*
 import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
@@ -25,6 +26,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.*
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.*
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.*
 import androidx.compose.ui.unit.*
 import net.ifmain.pinny.resources.decodeImageBitmap
@@ -227,7 +229,8 @@ private fun SearchRow(
                         unfocusedBorderColor = Color.Transparent,
                         cursorColor = MaterialTheme.colorScheme.secondary,
                     ),
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier.weight(1f),
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 )
                 AnimatedVisibility(text.isNotEmpty()) {
                     IconButton(onClick = onClear) {
