@@ -63,7 +63,13 @@ fun HomeRoute(
                 withDismissAction = true,
             )
             when (result) {
-                SnackbarResult.ActionPerformed -> viewModel.onIntent(HomeIntent.UndoArchive(undo.id, undo.previousArchived))
+                SnackbarResult.ActionPerformed -> viewModel.onIntent(
+                    HomeIntent.UndoArchive(
+                        undo.id,
+                        undo.previousArchived
+                    )
+                )
+
                 SnackbarResult.Dismissed -> viewModel.onIntent(HomeIntent.DismissUndo)
             }
         }
@@ -91,14 +97,18 @@ fun HomeScreen(
     val behavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     Scaffold(
-        topBar = { PinnyTopBar(
-            isSearching = searching,
-            searchText = query,
-            onSearchTextChange = { query = it; viewModel.onIntent(HomeIntent.QueryChanged(it)) },
-            onSearchToggle = { searching = it },
-            onOverflowClick = { /* 메뉴 */ },
-            scrollBehavior = behavior
-        ) },
+        topBar = {
+            PinnyTopBar(
+                isSearching = searching,
+                searchText = query,
+                onSearchTextChange = {
+                    query = it; viewModel.onIntent(HomeIntent.QueryChanged(it))
+                },
+                onSearchToggle = { searching = it },
+                onOverflowClick = { /* 메뉴 */ },
+                scrollBehavior = behavior
+            )
+        },
         floatingActionButton = { AddFab { onIntent(HomeIntent.ShowAddSheet) } },
         snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { paddingValues ->
@@ -113,10 +123,18 @@ fun HomeScreen(
                     isQueryBlank = state.query.isBlank(),
                     onAddClick = { onIntent(HomeIntent.ShowAddSheet) }
                 )
+
                 else -> BookmarkList(
                     items = state.items,
                     onOpen = { onIntent(HomeIntent.Open(it)) },
-                    onArchive = { id, archived -> onIntent(HomeIntent.ToggleArchive(id, archived)) },
+                    onArchive = { id, archived ->
+                        onIntent(
+                            HomeIntent.ToggleArchive(
+                                id,
+                                archived
+                            )
+                        )
+                    },
                     onDelete = { id -> onIntent(HomeIntent.Delete(id)) },
                 )
             }
@@ -176,10 +194,12 @@ fun BookmarkList(
                             onDelete(item.id)
                             false
                         }
+
                         SwipeToDismissBoxValue.EndToStart -> {
                             onArchive(item.id, !item.isArchived)
                             false
                         }
+
                         else -> false
                     }
                 }
@@ -348,14 +368,19 @@ fun EmptyState(
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        val gradient = Brush.linearGradient(colorStops = PinnyEmptyStateGradientStops.toTypedArray())
+        val gradient =
+            Brush.linearGradient(colorStops = PinnyEmptyStateGradientStops.toTypedArray())
         Box(
             modifier = Modifier
                 .size(72.dp)
                 .background(brush = gradient, shape = CircleShape),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(Icons.Outlined.Bookmarks, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimary)
+            Icon(
+                Icons.Outlined.Bookmarks,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimary
+            )
         }
         Spacer(Modifier.height(MaterialTheme.spacing.lg))
         Text(
@@ -393,7 +418,10 @@ fun ShimmerListPlaceholder() {
         repeat(5) {
             Box(
                 modifier = Modifier
-                    .padding(horizontal = MaterialTheme.spacing.lg, vertical = MaterialTheme.spacing.sm)
+                    .padding(
+                        horizontal = MaterialTheme.spacing.lg,
+                        vertical = MaterialTheme.spacing.sm
+                    )
                     .fillMaxWidth()
                     .height(88.dp)
                     .clip(RoundedCornerShape(MaterialTheme.corners.card))
@@ -433,7 +461,12 @@ fun AddEditSheet(
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = MaterialTheme.colorScheme.surface,
                 unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-            )
+            ),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Uri,
+                imeAction = ImeAction.Next,
+                showKeyboardOnFocus = true
+            ),
         )
         Spacer(Modifier.height(MaterialTheme.spacing.sm))
         TextField(
@@ -444,7 +477,12 @@ fun AddEditSheet(
             colors = TextFieldDefaults.colors(
                 focusedContainerColor = MaterialTheme.colorScheme.surface,
                 unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-            )
+            ),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Uri,
+                imeAction = ImeAction.Next,
+                showKeyboardOnFocus = true
+            ),
         )
         Spacer(Modifier.height(MaterialTheme.spacing.sm))
         Row(horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.sm)) {
@@ -456,7 +494,12 @@ fun AddEditSheet(
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = MaterialTheme.colorScheme.surface,
                     unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                )
+                ),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Uri,
+                    imeAction = ImeAction.Next,
+                    showKeyboardOnFocus = true
+                ),
             )
             TextField(
                 value = tags,
@@ -466,7 +509,12 @@ fun AddEditSheet(
                 colors = TextFieldDefaults.colors(
                     focusedContainerColor = MaterialTheme.colorScheme.surface,
                     unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                )
+                ),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Uri,
+                    imeAction = ImeAction.Done,
+                    showKeyboardOnFocus = true
+                ),
             )
         }
         Spacer(Modifier.height(MaterialTheme.spacing.lg))
