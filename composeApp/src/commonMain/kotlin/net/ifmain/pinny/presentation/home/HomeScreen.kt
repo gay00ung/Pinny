@@ -96,7 +96,6 @@ fun HomeScreen(
             searchText = query,
             onSearchTextChange = { query = it; viewModel.onIntent(HomeIntent.QueryChanged(it)) },
             onSearchToggle = { searching = it },
-            onAddClick = { /* 열기: Add bottom sheet */ },
             onOverflowClick = { /* 메뉴 */ },
             scrollBehavior = behavior
         ) },

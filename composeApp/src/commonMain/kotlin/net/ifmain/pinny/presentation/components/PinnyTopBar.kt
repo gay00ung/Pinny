@@ -42,7 +42,6 @@ fun PinnyTopBar(
     searchText: String,
     onSearchTextChange: (String) -> Unit,
     onSearchToggle: (Boolean) -> Unit,
-    onAddClick: () -> Unit,
     onOverflowClick: () -> Unit,
     onBackFromSearch: () -> Unit = { onSearchToggle(false) },
     scrollBehavior: TopAppBarScrollBehavior? = TopAppBarDefaults.pinnedScrollBehavior()
@@ -93,7 +92,6 @@ fun PinnyTopBar(
                 DefaultRow(
                     title = title,
                     onSearch = { onSearchToggle(true) },
-                    onAdd = onAddClick,
                     onOverflow = onOverflowClick
                 )
             }
@@ -115,7 +113,6 @@ fun PinnyTopBar(
 private fun DefaultRow(
     title: String,
     onSearch: () -> Unit,
-    onAdd: () -> Unit,
     onOverflow: () -> Unit
 ) {
     var bmp by remember { mutableStateOf<ImageBitmap?>(null) }
@@ -164,11 +161,6 @@ private fun DefaultRow(
 
         Spacer(Modifier.width(15.dp))
 
-        // Add
-        SmallIconButton(icon = Icons.Filled.Add, contentDesc = "추가", onClick = onAdd)
-        
-        Spacer(Modifier.width(15.dp))
-
         // Overflow
         SmallIconButton(icon = Icons.Filled.MoreVert, contentDesc = "옵션", onClick = onOverflow)
     }
@@ -177,7 +169,7 @@ private fun DefaultRow(
 @Preview
 @Composable
 private fun DefaultRowPreview() {
-    DefaultRow(title = "Pinny", onSearch = {}, onAdd = {}, onOverflow = {})
+    DefaultRow(title = "Pinny", onSearch = {}, onOverflow = {})
 }
 
 /* ===== 검색 행(필 형태) ===== */
