@@ -1,16 +1,12 @@
 package net.ifmain.pinny.di
 
-import net.ifmain.pinny.data.BookmarkRepositoryImpl
-import net.ifmain.pinny.data.PlatformCapabilities
-import net.ifmain.pinny.database.BookmarksDatabase
-import net.ifmain.pinny.domain.port.BookmarkRepository
-import net.ifmain.pinny.domain.usecase.AddBookmark
-import net.ifmain.pinny.domain.usecase.ArchiveBookmark
-import net.ifmain.pinny.domain.usecase.GetAllBookmarks
-import net.ifmain.pinny.domain.usecase.SearchBookmarks
-import kotlinx.serialization.json.Json
-import org.koin.core.module.dsl.singleOf
-import org.koin.dsl.module
+import kotlinx.serialization.json.*
+import net.ifmain.pinny.data.*
+import net.ifmain.pinny.database.*
+import net.ifmain.pinny.domain.port.*
+import net.ifmain.pinny.domain.usecase.*
+import org.koin.core.module.dsl.*
+import org.koin.dsl.*
 
 fun sharedModule(
     dbFactory: () -> BookmarksDatabase,
@@ -28,5 +24,6 @@ fun sharedModule(
     singleOf(::ArchiveBookmark)
     singleOf(::SearchBookmarks)
     singleOf(::GetAllBookmarks)
+    singleOf(::DeleteBookmark)
 }
 

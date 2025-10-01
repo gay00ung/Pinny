@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import net.ifmain.pinny.domain.usecase.AddBookmark
 import net.ifmain.pinny.domain.usecase.ArchiveBookmark
+import net.ifmain.pinny.domain.usecase.DeleteBookmark
 import net.ifmain.pinny.domain.usecase.GetAllBookmarks
 import net.ifmain.pinny.domain.usecase.SearchBookmarks
 
@@ -25,6 +26,7 @@ class HomeViewModel(
     private val searchBookmarks: SearchBookmarks,
     private val addBookmark: AddBookmark,
     private val archiveBookmark: ArchiveBookmark,
+    private val deleteBookmark: DeleteBookmark
 ) : ViewModel() {
 
     private val query = MutableStateFlow("")
@@ -153,7 +155,13 @@ class HomeViewModel(
 
     private fun handleDelete(id: String) {
         viewModelScope.launch {
-            _effect.emit(HomeEffect.Snackbar("삭제 기능은 곧 지원될 예정이에요"))
+            runCatching {
+                deleteBookmark(id)
+            } .onSuccess {
+                _effect.emit(HomeEffect.Snackbar("삭제했어요"))
+            }.onFailure { throwable ->
+                _effect.emit(HomeEffect.Snackbar(throwable.message ?: "삭제에 실패했어요"))
+            }
         }
     }
 }

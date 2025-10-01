@@ -35,3 +35,6 @@ SELECT * FROM bookmarks
 WHERE isArchived = 0
   AND (title LIKE ? OR description LIKE ? OR url LIKE ?)
 ORDER BY updatedAt DESC;
+
+deleteBookmarkById:
+DELETE FROM bookmarks WHERE id = ?;

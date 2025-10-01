@@ -61,6 +61,10 @@ class BookmarkRepositoryImpl(
             id = id
         )
     }
+
+    override suspend fun delete(id: String) {
+        queries.deleteBookmarkById(id)
+    }
 }
 
 private fun Bookmarks.toDomain(json: Json): Bookmark = Bookmark(
