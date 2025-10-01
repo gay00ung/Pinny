@@ -156,6 +156,7 @@ class HomeViewModel(
     private fun handleDelete(id: String) {
         viewModelScope.launch {
             runCatching {
+                // TODO: 삭제 전에 다이얼로그 한번 더 띄우기
                 deleteBookmark(id)
             } .onSuccess {
                 _effect.emit(HomeEffect.Snackbar("삭제했어요"))
