@@ -158,7 +158,7 @@ class HomeViewModel(
             runCatching {
                 // TODO: 삭제 전에 다이얼로그 한번 더 띄우기
                 deleteBookmark(id)
-            } .onSuccess {
+            }.onSuccess {
                 _effect.emit(HomeEffect.Snackbar("삭제했어요"))
             }.onFailure { throwable ->
                 _effect.emit(HomeEffect.Snackbar(throwable.message ?: "삭제에 실패했어요"))
