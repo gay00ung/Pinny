@@ -1,38 +1,81 @@
 package net.ifmain.pinny.presentation.home
 
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.*
-import androidx.compose.foundation.shape.*
-import androidx.compose.foundation.text.*
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Archive
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.outlined.Bookmarks
 import androidx.compose.material.icons.outlined.Delete
-import androidx.compose.material3.*
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.material3.Button
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
+import androidx.compose.material3.Surface
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.*
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.*
-import androidx.compose.ui.draw.*
-import androidx.compose.ui.graphics.*
-import androidx.compose.ui.graphics.vector.*
-import androidx.compose.ui.text.input.*
-import androidx.compose.ui.text.style.*
-import androidx.compose.ui.unit.*
-import androidx.lifecycle.compose.*
-import kotlinx.coroutines.flow.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.flow.collectLatest
+import net.ifmain.pinny.presentation.components.AddEditSheet
 import net.ifmain.pinny.presentation.components.PinnyTopBar
-import net.ifmain.pinny.presentation.theme.*
+import net.ifmain.pinny.presentation.theme.PinnyEmptyStateGradientStops
+import net.ifmain.pinny.presentation.theme.PinnyTheme
+import net.ifmain.pinny.presentation.theme.corners
+import net.ifmain.pinny.presentation.theme.elevations
+import net.ifmain.pinny.presentation.theme.spacing
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -430,121 +473,6 @@ fun ShimmerListPlaceholder() {
         }
     }
 }
-
-@Composable
-fun AddEditSheet(
-    initial: BookmarkListItem? = null,
-    onSave: (url: String, note: String?, category: String?, tags: List<String>) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    var url by rememberSaveable { mutableStateOf(initial?.url.orEmpty()) }
-    var note by rememberSaveable { mutableStateOf(initial?.note.orEmpty()) }
-    var category by rememberSaveable { mutableStateOf(initial?.category.orEmpty()) }
-    var tags by rememberSaveable { mutableStateOf(initial?.tags?.joinToString(", ").orEmpty()) }
-
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = MaterialTheme.spacing.xl, vertical = MaterialTheme.spacing.lg)
-    ) {
-        Text(
-            text = if (initial == null) "새 북마크" else "북마크 수정",
-            style = MaterialTheme.typography.titleLarge,
-        )
-        Spacer(Modifier.height(MaterialTheme.spacing.lg))
-        TextField(
-            value = url,
-            onValueChange = { url = it },
-            label = { Text("URL") },
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-            ),
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Uri,
-                imeAction = ImeAction.Next,
-                showKeyboardOnFocus = true
-            ),
-        )
-        Spacer(Modifier.height(MaterialTheme.spacing.sm))
-        TextField(
-            value = note,
-            onValueChange = { note = it },
-            label = { Text("메모") },
-            modifier = Modifier.fillMaxWidth(),
-            colors = TextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-            ),
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Uri,
-                imeAction = ImeAction.Next,
-                showKeyboardOnFocus = true
-            ),
-        )
-        Spacer(Modifier.height(MaterialTheme.spacing.sm))
-        Row(horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.sm)) {
-            TextField(
-                value = category,
-                onValueChange = { category = it },
-                label = { Text("카테고리") },
-                modifier = Modifier.weight(1f),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surface,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                ),
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Uri,
-                    imeAction = ImeAction.Next,
-                    showKeyboardOnFocus = true
-                ),
-            )
-            TextField(
-                value = tags,
-                onValueChange = { tags = it },
-                label = { Text("태그(쉼표)") },
-                modifier = Modifier.weight(1f),
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = MaterialTheme.colorScheme.surface,
-                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                ),
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Uri,
-                    imeAction = ImeAction.Done,
-                    showKeyboardOnFocus = true
-                ),
-            )
-        }
-        Spacer(Modifier.height(MaterialTheme.spacing.lg))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End,
-        ) {
-            TextButton(onClick = onDismiss) { Text("취소") }
-            Spacer(Modifier.width(MaterialTheme.spacing.sm))
-            Button(
-                enabled = url.isNotBlank(),
-                onClick = {
-                    onSave(
-                        url.trim(),
-                        note.takeIf { it.isNotBlank() },
-                        category.takeIf { it.isNotBlank() },
-                        parseTags(tags),
-                    )
-                }
-            ) {
-                Text("저장")
-            }
-        }
-    }
-}
-
-private fun parseTags(raw: String): List<String> = raw
-    .split(',')
-    .map { it.trim() }
-    .filter { it.isNotBlank() }
 
 @Preview(showBackground = true)
 @Composable
