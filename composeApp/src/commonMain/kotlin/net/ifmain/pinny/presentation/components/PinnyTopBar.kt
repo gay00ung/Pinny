@@ -205,8 +205,8 @@ private fun SearchRow(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .height(44.dp)
                     .fillMaxWidth()
+                    .defaultMinSize(minHeight = 56.dp)
                     .padding(start = 12.dp, end = 6.dp)
             ) {
                 Icon(Icons.Filled.Search, contentDescription = null, tint = Color(0xFFAA99FF))
@@ -214,7 +214,13 @@ private fun SearchRow(
                 TextField(
                     value = text,
                     onValueChange = onTextChange,
-                    placeholder = { Text("Search links, notes, tags", color = Color(0xFF888888)) },
+                    placeholder = {
+                        Text(
+                            text = "링크, 노트, 태그 검색",
+                            color = Color(0xFF888888),
+                            fontSize = 14.sp
+                        )
+                    },
                     singleLine = true,
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = Color.Transparent,
