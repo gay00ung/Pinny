@@ -70,6 +70,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.collectLatest
 import net.ifmain.pinny.presentation.components.AddEditSheet
+import net.ifmain.pinny.presentation.components.CustomDialog
 import net.ifmain.pinny.presentation.components.PinnyTopBar
 import net.ifmain.pinny.presentation.theme.PinnyEmptyStateGradientStops
 import net.ifmain.pinny.presentation.theme.PinnyTheme
@@ -138,6 +139,7 @@ fun HomeScreen(
     var searching by remember { mutableStateOf(false) }
     var query by remember { mutableStateOf("") }
     val behavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+    var deleteTarget by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
         topBar = {
@@ -178,7 +180,9 @@ fun HomeScreen(
                             )
                         )
                     },
-                    onDelete = { id -> onIntent(HomeIntent.Delete(id)) },
+                    onDelete = { id ->
+                        deleteTarget = id
+                    },
                 )
             }
         }
@@ -203,6 +207,21 @@ fun HomeScreen(
                 onDismiss = { onIntent(HomeIntent.HideAddSheet) }
             )
         }
+    }
+
+    deleteTarget?.let { id ->
+        CustomDialog(
+            onDismiss = { deleteTarget = null },
+            title = "북마크 삭제",
+            message = "정말로 삭제하시겠어요? 이 작업은 되돌릴 수 없어요.",
+            confirmText = "삭제",
+            onConfirm = {
+                onIntent(HomeIntent.Delete(id))
+                deleteTarget = null
+            },
+            dismissText = "취소",
+            showDismiss = true
+        )
     }
 }
 
