@@ -70,6 +70,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.collectLatest
 import net.ifmain.pinny.presentation.components.AddEditSheet
+import net.ifmain.pinny.presentation.components.BookmarkCard
 import net.ifmain.pinny.presentation.components.CustomDialog
 import net.ifmain.pinny.presentation.components.PinnyTopBar
 import net.ifmain.pinny.presentation.theme.PinnyEmptyStateGradientStops
@@ -311,109 +312,6 @@ fun DismissBackground(
     ) {
         if (icon != null) {
             Icon(icon, contentDescription = null, tint = color)
-        }
-    }
-}
-
-@Composable
-fun BookmarkCard(
-    item: BookmarkListItem,
-    onClick: () -> Unit,
-    onArchive: () -> Unit,
-) {
-    Surface(
-        modifier = Modifier
-            .padding(horizontal = MaterialTheme.spacing.lg, vertical = MaterialTheme.spacing.sm)
-            .fillMaxWidth(),
-        shape = RoundedCornerShape(MaterialTheme.corners.card),
-        tonalElevation = MaterialTheme.elevations.level1,
-    ) {
-        Row(
-            modifier = Modifier
-                .clickable(onClick = onClick)
-                .padding(MaterialTheme.spacing.lg),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            BookmarkThumbnail(title = item.title)
-            Spacer(Modifier.width(MaterialTheme.spacing.lg))
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = item.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = item.domain,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                )
-                item.note?.takeIf { it.isNotBlank() }?.let {
-                    Spacer(Modifier.height(MaterialTheme.spacing.xs))
-                    Text(
-                        text = it,
-                        style = MaterialTheme.typography.bodySmall,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
-                if (item.tags.isNotEmpty()) {
-                    Spacer(Modifier.height(MaterialTheme.spacing.sm))
-                    TagRow(tags = item.tags)
-                }
-            }
-            IconButton(onClick = onArchive) {
-                Icon(Icons.Filled.Archive, contentDescription = "보관")
-            }
-        }
-    }
-}
-
-@Composable
-fun BookmarkThumbnail(title: String) {
-    Box(
-        modifier = Modifier
-            .width(96.dp)
-            .aspectRatio(16f / 9f)
-            .clip(RoundedCornerShape(MaterialTheme.corners.card))
-            .background(MaterialTheme.colorScheme.surfaceVariant),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = title.take(1).uppercase(),
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
-}
-
-@Composable
-fun TagRow(tags: List<String>) {
-    val visible = tags.take(2)
-    val overflow = tags.size - visible.size
-    Row(horizontalArrangement = Arrangement.spacedBy(MaterialTheme.spacing.xs)) {
-        visible.forEach { tag ->
-            AssistChip(
-                onClick = {},
-                label = { Text(tag) },
-                shape = RoundedCornerShape(999.dp),
-                colors = AssistChipDefaults.assistChipColors(
-                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                    labelColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                )
-            )
-        }
-        if (overflow > 0) {
-            AssistChip(
-                onClick = {},
-                label = { Text("+${overflow}") },
-                shape = RoundedCornerShape(999.dp),
-                colors = AssistChipDefaults.assistChipColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                    labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            )
         }
     }
 }

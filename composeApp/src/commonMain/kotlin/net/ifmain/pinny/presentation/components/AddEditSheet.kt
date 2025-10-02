@@ -1,51 +1,32 @@
 package net.ifmain.pinny.presentation.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.material3.Surface
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import net.ifmain.pinny.presentation.home.BookmarkListItem
-import net.ifmain.pinny.presentation.theme.PinnyEmptyStateGradientStops
-import net.ifmain.pinny.presentation.theme.corners
-import net.ifmain.pinny.presentation.theme.elevations
-import net.ifmain.pinny.presentation.theme.spacing
+import androidx.compose.animation.*
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.*
+import androidx.compose.foundation.text.*
+import androidx.compose.material.icons.*
+import androidx.compose.material.icons.outlined.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.*
+import androidx.compose.ui.*
+import androidx.compose.ui.draw.*
+import androidx.compose.ui.graphics.*
+import androidx.compose.ui.platform.*
+import androidx.compose.ui.text.input.*
+import androidx.compose.ui.text.style.*
+import androidx.compose.ui.unit.*
+import net.ifmain.pinny.presentation.home.*
+import net.ifmain.pinny.presentation.theme.*
 
+/**
+ * 드롭인 교체 가능한 AddEditSheet (디자인 업그레이드)
+ * - 헤더 톤 다운 + 라운드 업
+ * - URL 필드: 붙여넣기/Paste, 유효성(✓/!) 표시
+ * - 태그: 삭제 가능한 칩 + (옵션) 추천칩 훅
+ * - 버튼 영역 시각 정리 (Sticky는 아님; 외부 시트에 따라 높이 보정)
+ */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AddEditSheet(
@@ -56,20 +37,23 @@ fun AddEditSheet(
     var url by rememberSaveable { mutableStateOf(initial?.url.orEmpty()) }
     var note by rememberSaveable { mutableStateOf(initial?.note.orEmpty()) }
     var category by rememberSaveable { mutableStateOf(initial?.category.orEmpty()) }
-    var tags by rememberSaveable { mutableStateOf(initial?.tags?.joinToString(", ").orEmpty()) }
+    var tagsText by rememberSaveable { mutableStateOf(initial?.tags?.joinToString(", ").orEmpty()) }
 
     val spacing = MaterialTheme.spacing
     val isEditing = initial != null
     val actionLabel = if (isEditing) "업데이트" else "저장"
     val subtitle = if (isEditing) "내용을 다듬고 저장하면 목록에 바로 반영돼요." else "URL을 붙여넣고 필요한 메모와 태그를 추가해보세요."
+    val currentTags = remember(tagsText) { parseTags(tagsText) }
+    val clipboard = LocalClipboardManager.current
+
+    val isUrlError = remember(url) { url.isNotBlank() && !url.startsWith("http") }
+
     val headerBrush = Brush.linearGradient(
-        colorStops = PinnyEmptyStateGradientStops.mapIndexed { index, pair ->
-            val (stop, color) = pair
-            val tinted = if (index == 0) color else color.copy(alpha = 0.85f)
+        colorStops = PinnyEmptyStateGradientStops.mapIndexed { idx, (stop, color) ->
+            val tinted = if (idx == 0) color.copy(alpha = 0.22f) else color.copy(alpha = 0.18f)
             stop to tinted
         }.toTypedArray()
     )
-    val currentTags = remember(tags) { parseTags(tags) }
 
     Column(
         modifier = Modifier
@@ -79,31 +63,52 @@ fun AddEditSheet(
     ) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(MaterialTheme.corners.card),
+            shape = RoundedCornerShape(MaterialTheme.corners.card + 4.dp),
             tonalElevation = MaterialTheme.elevations.level1,
         ) {
             Column(Modifier.padding(spacing.lg)) {
+                // Header
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(MaterialTheme.corners.card))
+                        .clip(RoundedCornerShape(MaterialTheme.corners.card + 4.dp))
                         .background(headerBrush)
                         .padding(vertical = spacing.md, horizontal = spacing.lg)
                 ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(spacing.xs)) {
-                        Text(
-                            text = if (isEditing) "북마크 수정" else "새 북마크",
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Text(
-                            text = subtitle,
-                            color = MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.85f),
-                            style = MaterialTheme.typography.bodyMedium
-                        )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(spacing.sm),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Box(
+                            Modifier
+                                .size(28.dp)
+                                .clip(CircleShape)
+                                .background(Color.White.copy(alpha = 0.35f))
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Bookmarks,
+                                contentDescription = null,
+                                tint = Color.White,
+                                modifier = Modifier.padding(4.dp)
+                            )
+                        }
+                        Column {
+                            Text(
+                                text = if (isEditing) "북마크 수정" else "새 북마크",
+                                color = MaterialTheme.colorScheme.onSurface,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                text = subtitle,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
                     }
                 }
 
+                // 미리보기(있으면)
                 initial?.let { item ->
                     Spacer(Modifier.height(spacing.md))
                     BookmarkSheetPreview(item)
@@ -111,21 +116,22 @@ fun AddEditSheet(
 
                 Spacer(Modifier.height(spacing.lg))
 
-                SheetField(
-                    label = "URL",
-                    required = true,
+                // URL 필드 (붙여넣기 + 유효성)
+                UrlField(
                     value = url,
                     onValueChange = { url = it },
                     placeholder = "https://bof.ifmain.net",
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Uri,
-                        imeAction = ImeAction.Next,
-                        showKeyboardOnFocus = true
-                    )
+                    isError = isUrlError,
+                    onPaste = {
+                        clipboard.getText()?.text?.let { pasted ->
+                            url = pasted.trim()
+                        }
+                    }
                 )
 
                 Spacer(Modifier.height(spacing.sm))
 
+                // 노트
                 SheetField(
                     label = "노트",
                     value = note,
@@ -141,12 +147,13 @@ fun AddEditSheet(
 
                 Spacer(Modifier.height(spacing.sm))
 
+                // 카테고리 + 태그
                 Row(horizontalArrangement = Arrangement.spacedBy(spacing.sm)) {
                     SheetField(
                         label = "카테고리",
                         value = category,
                         onValueChange = { category = it },
-                        placeholder = "예: 읽을거리",
+                        placeholder = "예: 쇼핑",
                         modifier = Modifier.weight(1f),
                         keyboardOptions = KeyboardOptions(
                             keyboardType = KeyboardType.Text,
@@ -158,8 +165,8 @@ fun AddEditSheet(
                     SheetField(
                         label = "태그",
                         supportingText = "쉼표(,)로 구분하면 여러 개를 추가할 수 있어요!",
-                        value = tags,
-                        onValueChange = { tags = it },
+                        value = tagsText,
+                        onValueChange = { tagsText = it },
                         placeholder = "예: 개발, 취미",
                         modifier = Modifier.weight(1f),
                         keyboardOptions = KeyboardOptions(
@@ -170,12 +177,13 @@ fun AddEditSheet(
                     )
                 }
 
+                // 태그 칩
                 if (currentTags.isNotEmpty()) {
                     Spacer(Modifier.height(spacing.sm))
                     Text(
                         text = "현재 태그",
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Spacer(Modifier.height(spacing.xs))
                     FlowRow(
@@ -183,48 +191,161 @@ fun AddEditSheet(
                         verticalArrangement = Arrangement.spacedBy(spacing.xs)
                     ) {
                         currentTags.forEach { tag ->
-                            AssistChip(
-                                onClick = {},
-                                label = { Text(tag) },
-                                leadingIcon = null,
+                            Surface(
                                 shape = RoundedCornerShape(MaterialTheme.corners.card),
-                                colors = AssistChipDefaults.assistChipColors(
-                                    containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                                    labelColor = MaterialTheme.colorScheme.onTertiaryContainer
-                                )
-                            )
+                                color = MaterialTheme.colorScheme.tertiaryContainer,
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        tag,
+                                        color = MaterialTheme.colorScheme.onTertiaryContainer
+                                    )
+                                    Spacer(Modifier.width(6.dp))
+                                    IconButton(
+                                        onClick = {
+                                            val new = currentTags.filterNot { it == tag }
+                                            tagsText = new.joinToString(", ")
+                                        },
+                                        modifier = Modifier.size(20.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Outlined.Close,
+                                            contentDescription = "태그 제거",
+                                            tint = MaterialTheme.colorScheme.onTertiaryContainer
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
 
                 Spacer(Modifier.height(spacing.lg))
 
+                // 액션
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(spacing.sm)
                 ) {
                     OutlinedButton(
                         onClick = onDismiss,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text("취소")
-                    }
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(MaterialTheme.corners.card)
+                    ) { Text("취소") }
 
                     Button(
-                        enabled = url.isNotBlank(),
+                        enabled = url.isNotBlank() && !isUrlError,
                         onClick = {
                             onSave(
                                 url.trim(),
                                 note.takeIf { it.isNotBlank() },
                                 category.takeIf { it.isNotBlank() },
-                                parseTags(tags),
+                                currentTags
                             )
                         },
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Text(actionLabel)
-                    }
+                        modifier = Modifier.weight(1f),
+                        shape = RoundedCornerShape(MaterialTheme.corners.card)
+                    ) { Text(actionLabel) }
                 }
+            }
+        }
+
+        // 바닥 여유 (시트 라운드와 스와이프 공간)
+        Spacer(Modifier.height(spacing.md))
+    }
+}
+
+@Composable
+private fun UrlField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String,
+    isError: Boolean,
+    onPaste: () -> Unit
+) {
+    val spacing = MaterialTheme.spacing
+    Column {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "URL",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Spacer(Modifier.width(4.dp))
+            Text(
+                text = "*",
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.error
+            )
+        }
+        Spacer(Modifier.height(spacing.xs))
+
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = {
+                Text(
+                    text = placeholder,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Uri,
+                imeAction = ImeAction.Next,
+                showKeyboardOnFocus = true
+            ),
+            leadingIcon = {
+                Icon(Icons.Outlined.Link, contentDescription = null)
+            },
+            trailingIcon = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    AnimatedVisibility(value.isNotBlank()) {
+                        Icon(
+                            imageVector = if (isError) Icons.Outlined.Error else Icons.Outlined.CheckCircle,
+                            contentDescription = null,
+                            tint = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.tertiary
+                        )
+                    }
+                    Spacer(Modifier.width(6.dp))
+                    AssistChip(
+                        onClick = onPaste,
+                        label = { Text("붙여넣기") },
+                        shape = RoundedCornerShape(12.dp),
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                            labelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f),
+                            leadingIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            disabledContainerColor = Color.Transparent
+                        ),
+                        border = BorderStroke(0.dp, Color.Transparent)
+                    )
+
+                    Spacer(Modifier.width(6.dp))
+                }
+            },
+            colors = TextFieldDefaults.colors(
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                focusedIndicatorColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.65f),
+                unfocusedIndicatorColor = MaterialTheme.colorScheme.outline,
+            ),
+            isError = isError,
+            shape = RoundedCornerShape(MaterialTheme.corners.card)
+        )
+        AnimatedVisibility(isError) {
+            Column {
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = "올바른 URL을 입력해 주세요",
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
             }
         }
     }
@@ -242,6 +363,7 @@ private fun SheetField(
     required: Boolean = false,
     keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
 ) {
+    val spacing = MaterialTheme.spacing
     Column(modifier = modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
@@ -258,7 +380,7 @@ private fun SheetField(
                 )
             }
         }
-        Spacer(Modifier.height(MaterialTheme.spacing.xs))
+        Spacer(Modifier.height(spacing.xs))
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
@@ -283,7 +405,7 @@ private fun SheetField(
             shape = RoundedCornerShape(MaterialTheme.corners.card)
         )
         if (!supportingText.isNullOrBlank()) {
-            Spacer(Modifier.height(MaterialTheme.spacing.xs))
+            Spacer(Modifier.height(spacing.xs))
             Text(
                 text = supportingText,
                 style = MaterialTheme.typography.bodySmall,
@@ -305,7 +427,8 @@ private fun BookmarkSheetPreview(item: BookmarkListItem) {
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(spacing.md),
-            horizontalArrangement = Arrangement.spacedBy(spacing.md)
+            horizontalArrangement = Arrangement.spacedBy(spacing.md),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
