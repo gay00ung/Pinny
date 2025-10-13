@@ -3,13 +3,17 @@ package net.ifmain.pinny.work
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.drawable.BitmapDrawable
+import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
-import coil.ImageLoader
-import coil.request.ImageRequest
+import coil3.ImageLoader
+import coil3.request.ImageRequest
+import coil3.request.SuccessResult
+import coil3.request.allowHardware
+import coil3.toBitmap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import net.ifmain.pinny.data.HtmlMetadataParser
@@ -33,12 +37,16 @@ class FetchMetaWorker(
         val id = inputData.getString(KEY_ID) ?: return Result.failure()
         val url = inputData.getString(KEY_URL) ?: return Result.failure()
 
+        Log.d(TAG, "Starting metadata sync for bookmark=$id url=$url")
+
         return runCatching {
             val meta = parser.fetch(url)
             val filePath = meta.imageUrl?.let { saveThumbnail(it, id) }
             repository.updateMeta(id, meta.title ?: prettyHost(url), filePath)
+            Log.i(TAG, "Metadata updated for bookmark=$id title='${meta.title}' thumbnailPath=$filePath")
             Result.success()
         }.getOrElse { throwable ->
+            Log.e(TAG, "Metadata sync failed for bookmark=$id url=$url", throwable)
             Result.retry().also {
                 throwable.printStackTrace()
             }
@@ -53,15 +61,19 @@ class FetchMetaWorker(
                 .allowHardware(false)
                 .build()
 
-            val result = loader.execute(request).drawable as? BitmapDrawable ?: return@runCatching null
-            val bitmap = result.bitmap
+            val result = loader.execute(request)
+            val bitmap = (result as? SuccessResult)?.image?.toBitmap()
+                ?: return@runCatching null
             val dir = File(applicationContext.filesDir, "thumbnails")
             if (!dir.exists()) dir.mkdirs()
             val file = File(dir, "$id.jpg")
             file.outputStream().use { stream ->
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 90, stream)
             }
+            Log.d(TAG, "Thumbnail saved for bookmark=$id path=${file.absolutePath}")
             file.absolutePath
+        }.onFailure { throwable ->
+            Log.w(TAG, "Failed to save thumbnail for bookmark=$id imageUrl=$imageUrl", throwable)
         }.getOrNull()
     }
 
@@ -76,5 +88,7 @@ fun enqueueFetchMetaWork(context: Context, id: String, url: String) {
         .setInputData(workDataOf(KEY_ID to id, KEY_URL to url))
         .build()
     WorkManager.getInstance(context).enqueue(request)
+    Log.d(TAG, "Work enqueued for metadata sync bookmark=$id")
 }
 
+private const val TAG = "PinnyMetadata"
