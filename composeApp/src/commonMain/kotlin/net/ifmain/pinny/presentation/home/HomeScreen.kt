@@ -148,7 +148,8 @@ fun HomeScreen(
                 isSearching = searching,
                 searchText = query,
                 onSearchTextChange = {
-                    query = it; viewModel.onIntent(HomeIntent.QueryChanged(it))
+                    query = it
+                    viewModel.onIntent(HomeIntent.QueryChanged(it))
                 },
                 onSearchToggle = { searching = it },
                 onOverflowClick = { /* 메뉴 */ },

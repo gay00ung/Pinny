@@ -48,7 +48,7 @@ class BookmarkRepositoryImpl(
 
     override fun search(keyword: String): Flow<List<Bookmark>> {
         val like = "%$keyword%"
-        return queries.searchAllLike(like, like, like)
+        return queries.searchAllLike(like, like, like, like)
             .asListFlow()
             .map { rows -> rows.map { it.toDomain(json) } }
     }

@@ -33,7 +33,7 @@ SELECT * FROM bookmarks WHERE isArchived = 0 ORDER BY updatedAt DESC;
 searchAllLike:
 SELECT * FROM bookmarks
 WHERE isArchived = 0
-  AND (title LIKE ? OR description LIKE ? OR url LIKE ?)
+  AND (title LIKE ? OR description LIKE ? OR url LIKE ? OR tagsJson LIKE ?)
 ORDER BY updatedAt DESC;
 
 deleteBookmarkById:
