@@ -28,8 +28,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import net.ifmain.pinny.presentation.home.BookmarkListItem
 import net.ifmain.pinny.presentation.theme.corners
 import net.ifmain.pinny.presentation.theme.elevations
@@ -54,7 +56,10 @@ fun BookmarkCard(
                 .padding(MaterialTheme.spacing.lg),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            BookmarkThumbnail(title = item.title)
+            BookmarkThumbnail(
+                title = item.title,
+                thumbnailUrl = item.thumbnailUrl
+            )
             Spacer(Modifier.width(MaterialTheme.spacing.lg))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
@@ -91,20 +96,35 @@ fun BookmarkCard(
 }
 
 @Composable
-fun BookmarkThumbnail(title: String) {
-    Box(
+fun BookmarkThumbnail(title: String, thumbnailUrl: String? = null) {
+    Surface(
         modifier = Modifier
             .width(96.dp)
             .aspectRatio(16f / 9f)
-            .clip(RoundedCornerShape(MaterialTheme.corners.card))
-            .background(MaterialTheme.colorScheme.surfaceVariant),
-        contentAlignment = Alignment.Center,
+            .clip(RoundedCornerShape(MaterialTheme.corners.card)),
+        color = MaterialTheme.colorScheme.surfaceVariant,
     ) {
-        Text(
-            text = title.take(1).uppercase(),
-            style = MaterialTheme.typography.headlineSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        if (!thumbnailUrl.isNullOrBlank()) {
+            AsyncImage(
+                model = thumbnailUrl,
+                contentDescription = "thumbnail",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(16f / 9f)
+                    .clip(RoundedCornerShape(MaterialTheme.corners.card)),
+                contentScale = ContentScale.Crop,
+            )
+        } else {
+            Box(
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = title.take(1).uppercase(),
+                    style = MaterialTheme.typography.headlineSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
     }
 }
 

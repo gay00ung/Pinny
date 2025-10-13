@@ -35,8 +35,9 @@ kotlin {
             implementation(libs.koin.androidx.compose)
             implementation(libs.jsoup)
             implementation(libs.okhttp)
-            implementation(libs.coil)
             implementation(libs.work.runtime)
+
+            implementation(libs.ktor.engine.android)
         }
         commonMain.dependencies {
             implementation(compose.runtime)
@@ -55,6 +56,12 @@ kotlin {
             implementation(libs.sqldelight.coroutines)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.serialization.json)
+
+            implementation(libs.coil.compose)
+            implementation(libs.coil.network.ktor)
+        }
+        iosMain.dependencies {
+            implementation(libs.ktor.engine.ios)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
