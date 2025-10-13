@@ -20,13 +20,15 @@ import net.ifmain.pinny.domain.usecase.ArchiveBookmark
 import net.ifmain.pinny.domain.usecase.DeleteBookmark
 import net.ifmain.pinny.domain.usecase.GetAllBookmarks
 import net.ifmain.pinny.domain.usecase.SearchBookmarks
+import net.ifmain.pinny.work.MetadataSync
 
 class HomeViewModel(
     private val getAllBookmarks: GetAllBookmarks,
     private val searchBookmarks: SearchBookmarks,
     private val addBookmark: AddBookmark,
     private val archiveBookmark: ArchiveBookmark,
-    private val deleteBookmark: DeleteBookmark
+    private val deleteBookmark: DeleteBookmark,
+    private val metadataSync: MetadataSync,
 ) : ViewModel() {
 
     private val query = MutableStateFlow("")
@@ -123,7 +125,8 @@ class HomeViewModel(
         viewModelScope.launch {
             runCatching {
                 addBookmark(intent.url, intent.note, intent.category, intent.tags)
-            }.onSuccess {
+            }.onSuccess { bookmark ->
+                metadataSync.schedule(bookmark.id, bookmark.url)
                 _state.update { it.copy(isAddSheetVisible = false) }
                 _effect.emit(HomeEffect.Snackbar("저장했어요! 메타데이터는 곧 업데이트돼요."))
             }.onFailure { throwable ->
