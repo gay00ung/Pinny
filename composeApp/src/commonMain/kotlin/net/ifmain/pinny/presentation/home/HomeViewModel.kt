@@ -5,6 +5,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import net.ifmain.pinny.domain.usecase.*
 import net.ifmain.pinny.work.*
+import kotlin.time.*
 
 class HomeViewModel(
     private val getAllBookmarks: GetAllBookmarks,
@@ -41,7 +42,7 @@ class HomeViewModel(
             is HomeIntent.Delete -> handleDelete(intent.id)
             HomeIntent.ShowAddSheet -> _state.update { it.copy(isAddSheetVisible = true) }
             HomeIntent.HideAddSheet -> _state.update { it.copy(isAddSheetVisible = false) }
-            HomeIntent.Refresh -> refresh.tryEmit(Unit)
+            HomeIntent.Refresh -> refresh()
             HomeIntent.DismissUndo -> _state.update { it.copy(undoRequest = null) }
         }
     }
@@ -143,7 +144,6 @@ class HomeViewModel(
     private fun handleDelete(id: String) {
         viewModelScope.launch {
             runCatching {
-                // TODO: 삭제 전에 다이얼로그 한번 더 띄우기
                 deleteBookmark(id)
             }.onSuccess {
                 _effect.emit(HomeEffect.Snackbar("삭제했어요"))
@@ -152,4 +152,38 @@ class HomeViewModel(
             }
         }
     }
+
+    private fun refresh() {
+        viewModelScope.launch {
+            _state.update { it.copy(isLoading = true) }
+            refresh.tryEmit(Unit)
+            refreshMetadata()
+            _state.update { it.copy(isLoading = false) }
+        }
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private suspend fun refreshMetadata() = withContext(Dispatchers.IO) {
+        val staleCutoff = Clock.System.now().toEpochMilliseconds() - METADATA_STALE_WINDOW
+        val staleCandidates = getAllBookmarks().first()
+            .asSequence()
+            .filter { bookmark ->
+                val missingTitle = bookmark.title.isNullOrBlank()
+                val missingThumbnail = bookmark.thumbnailUrl.isNullOrBlank()
+                val isStale = bookmark.updatedAt < staleCutoff
+                missingTitle || missingThumbnail || isStale
+            }
+            .distinctBy { it.id }
+            .take(MAX_METADATA_JOBS)
+
+        staleCandidates.forEach {
+            metadataSync.schedule(it.id, it.url)
+        }
+    }
+
+    private companion object {
+        const val METADATA_STALE_WINDOW = 1000L * 60 * 60 * 24 * 3  // 3일
+        const val MAX_METADATA_JOBS = 10
+    }
+
 }
