@@ -1,26 +1,16 @@
 package net.ifmain.pinny.work
 
-import android.content.Context
+import android.content.*
 import android.graphics.Bitmap
-import android.graphics.drawable.BitmapDrawable
-import android.util.Log
-import androidx.work.CoroutineWorker
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
-import androidx.work.WorkerParameters
-import androidx.work.workDataOf
-import coil3.ImageLoader
-import coil3.request.ImageRequest
-import coil3.request.SuccessResult
-import coil3.request.allowHardware
-import coil3.toBitmap
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import net.ifmain.pinny.data.HtmlMetadataParser
-import net.ifmain.pinny.domain.port.BookmarkRepository
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
-import java.io.File
+import android.util.*
+import androidx.work.*
+import coil3.*
+import coil3.request.*
+import kotlinx.coroutines.*
+import net.ifmain.pinny.data.*
+import net.ifmain.pinny.domain.port.*
+import org.koin.core.component.*
+import java.io.*
 
 private const val KEY_ID = "bookmark_id"
 private const val KEY_URL = "bookmark_url"

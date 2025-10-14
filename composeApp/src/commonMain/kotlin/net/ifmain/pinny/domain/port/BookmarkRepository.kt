@@ -1,7 +1,7 @@
 package net.ifmain.pinny.domain.port
 
-import kotlinx.coroutines.flow.Flow
-import net.ifmain.pinny.domain.model.Bookmark
+import kotlinx.coroutines.flow.*
+import net.ifmain.pinny.domain.model.*
 
 interface BookmarkRepository {
     suspend fun upsert(b: Bookmark)

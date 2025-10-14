@@ -1,12 +1,11 @@
 package net.ifmain.pinny.di
 
-import net.ifmain.pinny.data.HtmlMetadataParser
-import net.ifmain.pinny.presentation.home.HomeViewModel
-import net.ifmain.pinny.work.AndroidMetadataSync
-import net.ifmain.pinny.work.MetadataSync
-import org.koin.android.ext.koin.androidContext
-import org.koin.core.module.dsl.viewModel
-import org.koin.dsl.module
+import net.ifmain.pinny.data.*
+import net.ifmain.pinny.presentation.home.*
+import net.ifmain.pinny.work.*
+import org.koin.android.ext.koin.*
+import org.koin.core.module.dsl.*
+import org.koin.dsl.*
 
 val androidAppModule = module {
     viewModel { HomeViewModel(get(), get(), get(), get(), get(), get()) }
