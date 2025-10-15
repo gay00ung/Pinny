@@ -164,10 +164,8 @@ class HomeViewModel(
     }
 
     private suspend fun refresh() {
-        println(">>> Refresh triggered")
         refresh.tryEmit(Unit)
         refreshMetadata()
-        println(">>> Refresh completed")
     }
 
     @OptIn(ExperimentalTime::class)
@@ -185,7 +183,6 @@ class HomeViewModel(
             .take(MAX_METADATA_JOBS)
 
         staleCandidates.forEach {
-            println(">>> Scheduling metadata sync for bookmark id=${it.id}, url=${it.url}")
             metadataSync.schedule(it.id, it.url)
         }
     }

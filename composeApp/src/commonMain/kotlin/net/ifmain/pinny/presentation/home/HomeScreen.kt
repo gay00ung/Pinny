@@ -128,11 +128,7 @@ fun HomeScreen(
                     onDelete = { id ->
                         deleteTarget = id
                     },
-                    onRefresh = {
-                        println(">>> !!Refreshing...")
-                        onIntent(HomeIntent.Refresh)
-                        println(">>> !!Refresh intent sent")
-                                },
+                    onRefresh = { onIntent(HomeIntent.Refresh) },
                     isRefreshing = state.isRefreshing,
                 )
             }
