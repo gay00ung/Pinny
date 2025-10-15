@@ -1,36 +1,23 @@
 package net.ifmain.pinny.presentation.home
 
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import net.ifmain.pinny.domain.usecase.AddBookmark
-import net.ifmain.pinny.domain.usecase.ArchiveBookmark
-import net.ifmain.pinny.domain.usecase.DeleteBookmark
-import net.ifmain.pinny.domain.usecase.GetAllBookmarks
-import net.ifmain.pinny.domain.usecase.SearchBookmarks
+import androidx.lifecycle.*
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
+import net.ifmain.pinny.domain.usecase.*
+import net.ifmain.pinny.work.*
+import kotlin.time.*
 
 class HomeViewModel(
     private val getAllBookmarks: GetAllBookmarks,
     private val searchBookmarks: SearchBookmarks,
     private val addBookmark: AddBookmark,
     private val archiveBookmark: ArchiveBookmark,
-    private val deleteBookmark: DeleteBookmark
+    private val deleteBookmark: DeleteBookmark,
+    private val metadataSync: MetadataSync,
 ) : ViewModel() {
 
     private val query = MutableStateFlow("")
-    private val refresh = MutableSharedFlow<Unit>(replay = 1)
+    private val refresh = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
     private val _state = MutableStateFlow(HomeState())
     val state = _state.asStateFlow()
@@ -39,7 +26,6 @@ class HomeViewModel(
     val effect = _effect.asSharedFlow()
 
     init {
-        refresh.tryEmit(Unit)
         observeBookmarks()
     }
 
@@ -55,7 +41,18 @@ class HomeViewModel(
             is HomeIntent.Delete -> handleDelete(intent.id)
             HomeIntent.ShowAddSheet -> _state.update { it.copy(isAddSheetVisible = true) }
             HomeIntent.HideAddSheet -> _state.update { it.copy(isAddSheetVisible = false) }
-            HomeIntent.Refresh -> refresh.tryEmit(Unit)
+            HomeIntent.Refresh -> {
+                viewModelScope.launch {
+                    _state.update { it.copy(isRefreshing = true) }
+                    try {
+                        refresh()
+                    } catch (t: Throwable) {
+                        _effect.emit(HomeEffect.Snackbar(t.message ?: "새로고침 실패"))
+                    } finally {
+                        _state.update { it.copy(isRefreshing = false) }
+                    }
+                }
+            }
             HomeIntent.DismissUndo -> _state.update { it.copy(undoRequest = null) }
         }
     }
@@ -65,7 +62,7 @@ class HomeViewModel(
         viewModelScope.launch {
             combine(
                 query.debounce(200),
-                refresh
+                refresh.onStart { emit(Unit) }
             ) { q, _ -> q.trim() }
                 .flatMapLatest { keyword ->
                     _state.update { it.copy(isLoading = true, query = keyword) }
@@ -123,7 +120,8 @@ class HomeViewModel(
         viewModelScope.launch {
             runCatching {
                 addBookmark(intent.url, intent.note, intent.category, intent.tags)
-            }.onSuccess {
+            }.onSuccess { bookmark ->
+                metadataSync.schedule(bookmark.id, bookmark.url)
                 _state.update { it.copy(isAddSheetVisible = false) }
                 _effect.emit(HomeEffect.Snackbar("저장했어요! 메타데이터는 곧 업데이트돼요."))
             }.onFailure { throwable ->
@@ -156,7 +154,6 @@ class HomeViewModel(
     private fun handleDelete(id: String) {
         viewModelScope.launch {
             runCatching {
-                // TODO: 삭제 전에 다이얼로그 한번 더 띄우기
                 deleteBookmark(id)
             }.onSuccess {
                 _effect.emit(HomeEffect.Snackbar("삭제했어요"))
@@ -165,4 +162,34 @@ class HomeViewModel(
             }
         }
     }
+
+    private suspend fun refresh() {
+        refresh.tryEmit(Unit)
+        refreshMetadata()
+    }
+
+    @OptIn(ExperimentalTime::class)
+    private suspend fun refreshMetadata() = withContext(Dispatchers.IO) {
+        val staleCutoff = Clock.System.now().toEpochMilliseconds() - METADATA_STALE_WINDOW
+        val staleCandidates = getAllBookmarks().first()
+            .asSequence()
+            .filter { bookmark ->
+                val missingTitle = bookmark.title.isNullOrBlank()
+                val missingThumbnail = bookmark.thumbnailUrl.isNullOrBlank()
+                val isStale = bookmark.updatedAt < staleCutoff
+                missingTitle || missingThumbnail || isStale
+            }
+            .distinctBy { it.id }
+            .take(MAX_METADATA_JOBS)
+
+        staleCandidates.forEach {
+            metadataSync.schedule(it.id, it.url)
+        }
+    }
+
+    private companion object {
+        const val METADATA_STALE_WINDOW = 1000L * 60 * 60 * 24 * 3  // 3일
+        const val MAX_METADATA_JOBS = 10
+    }
+
 }
