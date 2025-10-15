@@ -46,7 +46,7 @@ fun AddEditSheet(
     val currentTags = remember(tagsText) { parseTags(tagsText) }
     val clipboard = LocalClipboardManager.current
 
-    val isUrlError = remember(url) { url.isNotBlank() && !url.startsWith("http") }
+    val isUrlError = remember(url) { url.isNotBlank() && !(url.matches(Regex("https?://.*")) || url.matches(Regex("http?://.*"))) }
 
     val headerBrush = Brush.linearGradient(
         colorStops = PinnyEmptyStateGradientStops.mapIndexed { idx, (stop, color) ->
