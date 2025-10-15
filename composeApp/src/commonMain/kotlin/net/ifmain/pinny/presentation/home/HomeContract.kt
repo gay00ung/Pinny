@@ -10,6 +10,7 @@ data class HomeState(
     val isAddSheetVisible: Boolean = false,
     val isOffline: Boolean = false,
     val undoRequest: UndoArchiveRequest? = null,
+    val isRefreshing: Boolean = false,
 )
 
 sealed interface HomeIntent {

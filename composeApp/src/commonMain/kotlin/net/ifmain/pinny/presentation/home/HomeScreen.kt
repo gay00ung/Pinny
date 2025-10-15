@@ -128,8 +128,12 @@ fun HomeScreen(
                     onDelete = { id ->
                         deleteTarget = id
                     },
-                    onRefresh = { onIntent(HomeIntent.Refresh) },
-                    isRefreshing = state.isLoading,
+                    onRefresh = {
+                        println(">>> !!Refreshing...")
+                        onIntent(HomeIntent.Refresh)
+                        println(">>> !!Refresh intent sent")
+                                },
+                    isRefreshing = state.isRefreshing,
                 )
             }
         }
@@ -193,10 +197,13 @@ fun BookmarkList(
     onRefresh: () -> Unit,
     isRefreshing: Boolean = false,
 ) {
+    val pullState = rememberPullToRefreshState()
+
     PullToRefreshBox(
         onRefresh = onRefresh,
         isRefreshing = isRefreshing,
         modifier = Modifier.fillMaxSize(),
+        state = pullState,
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),

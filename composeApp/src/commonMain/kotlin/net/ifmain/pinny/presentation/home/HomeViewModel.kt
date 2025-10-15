@@ -17,7 +17,7 @@ class HomeViewModel(
 ) : ViewModel() {
 
     private val query = MutableStateFlow("")
-    private val refresh = MutableSharedFlow<Unit>(replay = 1)
+    private val refresh = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
 
     private val _state = MutableStateFlow(HomeState())
     val state = _state.asStateFlow()
@@ -26,7 +26,6 @@ class HomeViewModel(
     val effect = _effect.asSharedFlow()
 
     init {
-        refresh.tryEmit(Unit)
         observeBookmarks()
     }
 
@@ -42,7 +41,18 @@ class HomeViewModel(
             is HomeIntent.Delete -> handleDelete(intent.id)
             HomeIntent.ShowAddSheet -> _state.update { it.copy(isAddSheetVisible = true) }
             HomeIntent.HideAddSheet -> _state.update { it.copy(isAddSheetVisible = false) }
-            HomeIntent.Refresh -> refresh()
+            HomeIntent.Refresh -> {
+                viewModelScope.launch {
+                    _state.update { it.copy(isRefreshing = true) }
+                    try {
+                        refresh()
+                    } catch (t: Throwable) {
+                        _effect.emit(HomeEffect.Snackbar(t.message ?: "새로고침 실패"))
+                    } finally {
+                        _state.update { it.copy(isRefreshing = false) }
+                    }
+                }
+            }
             HomeIntent.DismissUndo -> _state.update { it.copy(undoRequest = null) }
         }
     }
@@ -52,7 +62,7 @@ class HomeViewModel(
         viewModelScope.launch {
             combine(
                 query.debounce(200),
-                refresh
+                refresh.onStart { emit(Unit) }
             ) { q, _ -> q.trim() }
                 .flatMapLatest { keyword ->
                     _state.update { it.copy(isLoading = true, query = keyword) }
@@ -153,13 +163,11 @@ class HomeViewModel(
         }
     }
 
-    private fun refresh() {
-        viewModelScope.launch {
-            _state.update { it.copy(isLoading = true) }
-            refresh.tryEmit(Unit)
-            refreshMetadata()
-            _state.update { it.copy(isLoading = false) }
-        }
+    private suspend fun refresh() {
+        println(">>> Refresh triggered")
+        refresh.tryEmit(Unit)
+        refreshMetadata()
+        println(">>> Refresh completed")
     }
 
     @OptIn(ExperimentalTime::class)
@@ -177,6 +185,7 @@ class HomeViewModel(
             .take(MAX_METADATA_JOBS)
 
         staleCandidates.forEach {
+            println(">>> Scheduling metadata sync for bookmark id=${it.id}, url=${it.url}")
             metadataSync.schedule(it.id, it.url)
         }
     }
