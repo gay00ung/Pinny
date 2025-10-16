@@ -200,6 +200,15 @@ fun BookmarkList(
         isRefreshing = isRefreshing,
         modifier = Modifier.fillMaxSize(),
         state = pullState,
+        indicator = {
+            PullToRefreshDefaults.Indicator(
+                state = pullState,
+                isRefreshing = isRefreshing,
+                containerColor = MaterialTheme.colorScheme.surface,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.align(Alignment.TopCenter)
+            )
+        }
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
