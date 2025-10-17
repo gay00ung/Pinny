@@ -33,7 +33,7 @@ fun BookmarkCard(
         Row(
             modifier = Modifier
                 .clickable(onClick = onClick)
-                .padding(MaterialTheme.spacing.lg),
+                .padding(MaterialTheme.spacing.xs),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             BookmarkThumbnail(
